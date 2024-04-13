@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "139693089902",
+    "project_id": "ytu-app-f33cf",
+    "storage_bucket": "ytu-app-f33cf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139693089902:android:ecf40ef9f6e4f51252b27f",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIHH3Dhj1D13zvZAg0cWzg511d6kWPnnk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

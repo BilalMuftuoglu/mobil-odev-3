@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img">
+
+    <Button
+        android:id="@+id/signInButton"
+        android:layout_width="120dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginBottom="40dp"
+        android:backgroundTint="#071C25"
+        android:outlineAmbientShadowColor="#FEF7FF"
+        android:text="Giriş"
+        app:cornerRadius="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <EditText
+        android:id="@+id/passwordText"
+        android:layout_width="320dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="35dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="35dp"
+        android:ems="10"
+        android:drawableLeft="@drawable/baseline_lock_24"
+        android:drawablePadding="5dp"
+        android:background="@drawable/my_edit_text"
+        android:padding="5dp"
+        android:hint="Şifre:"
+        android:inputType="textPassword"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nameText" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="118dp"
+        android:layout_height="68dp"
+        android:layout_marginStart="35dp"
+        android:layout_marginTop="378dp"
+        android:layout_marginEnd="240dp"
+        android:text="Giriş"
+        android:textColor="#3080ED"
+        android:textColorHighlight="#FF9800"
+        android:textSize="45sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/forgotPasswordText"
+        android:layout_width="126dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="228dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="38dp"
+        android:text="Şifremi Unuttum?"
+        android:textColor="#96BBF6"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/passwordText" />
+
+    <EditText
+        android:id="@+id/nameText"
+        android:layout_width="320dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="35dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="35dp"
+        android:ems="10"
+        android:drawableLeft="@drawable/baseline_mail_24"
+        android:drawablePadding="5dp"
+        android:background="@drawable/my_edit_text"
+        android:padding="5dp"
+        android:hint="E-mail:"
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
+    <TextView
+        android:id="@+id/registerText"
+        android:layout_width="wrap_content"
+        android:layout_height="25dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="213dp"
+        android:layout_marginEnd="225dp"
+        android:layout_marginBottom="16dp"
+        android:text="Yeni misiniz? Kaydolun"
+        android:textColor="#FEF7FF"
+        android:textSize="15dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/passwordText" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="242dp"
+        android:layout_height="246dp"
+        android:layout_marginTop="40dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ytulogo" />
+</androidx.constraintlayout.widget.ConstraintLayout>

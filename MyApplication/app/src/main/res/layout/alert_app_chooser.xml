@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_gravity="center"
+    android:gravity="center">
+
+
+    <ImageButton
+        android:id="@+id/whatsappButton"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:scaleType="centerCrop"
+        android:background="@android:color/transparent"
+        android:src="@drawable/whatsapp"/>
+
+    <ImageButton
+        android:id="@+id/phoneButton"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:scaleType="centerCrop"
+        android:background="@android:color/transparent"
+        android:src="@drawable/phone"/>
+
+
+</LinearLayout>
