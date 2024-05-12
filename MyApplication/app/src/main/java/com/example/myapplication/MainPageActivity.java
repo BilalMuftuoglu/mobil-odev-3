@@ -23,16 +23,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainPageActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener {
+public class MainPageActivity extends AppCompatActivity implements UserRecyclerViewAdapter.ItemClickListener {
 
     SearchView searchView;
     RecyclerView myRecyclerView;
-    RecyclerViewAdapter recyclerViewAdapter;
+    UserRecyclerViewAdapter userRecyclerViewAdapter;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     ArrayList<Map<String,String>> users;
     ArrayList<Map<String,String>> filteredUsers;
     ProgressBar progressBar;
+    String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +46,8 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        email = mAuth.getCurrentUser().getEmail();
+
         users = new ArrayList<>();
         filteredUsers = new ArrayList<>();
 
@@ -55,9 +58,9 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
         myRecyclerView.setHasFixedSize(true);
         myRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(),filteredUsers);
-        recyclerViewAdapter.setClickListener(this);
-        myRecyclerView.setAdapter(recyclerViewAdapter);
+        userRecyclerViewAdapter = new UserRecyclerViewAdapter(getApplicationContext(),filteredUsers);
+        userRecyclerViewAdapter.setClickListener(this);
+        myRecyclerView.setAdapter(userRecyclerViewAdapter);
 
         View rootLayout = findViewById(android.R.id.content);
         rootLayout.setOnTouchListener(new View.OnTouchListener() {
@@ -76,7 +79,7 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
 
             @Override
             public boolean onQueryTextChange(String s) {
-                recyclerViewAdapter.filter(s,users);
+                userRecyclerViewAdapter.filter(s,users);
                 return false;
             }
         });
@@ -86,7 +89,7 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
     @Override
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(MainPageActivity.this, ProfileActivity.class);
-        intent.putExtra("email",recyclerViewAdapter.getItem(position).get("email"));
+        intent.putExtra("email", userRecyclerViewAdapter.getItem(position).get("email"));
         intent.putExtra("isSelf",false);
         startActivity(intent);
     }
@@ -95,8 +98,9 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_page_menu, menu);
 
-        if(!mAuth.getCurrentUser().getEmail().endsWith("@yildiz.edu.tr") && !mAuth.getCurrentUser().getEmail().endsWith("@std.yildiz.edu.tr")){
+        if(!email.endsWith("@yildiz.edu.tr") && !email.endsWith("@std.yildiz.edu.tr")){
             menu.removeItem(R.id.profileButton);
+            menu.removeItem(R.id.coursesButton);
         }
 
         return super.onCreateOptionsMenu(menu);
@@ -116,6 +120,19 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
             intent.putExtra("email",mAuth.getCurrentUser().getEmail());
             intent.putExtra("isSelf",true);
             startActivity(intent);
+        }else if (id == R.id.coursesButton){
+            Intent intent = new Intent(MainPageActivity.this,CoursesActivity.class);
+            startActivity(intent);
+        }else if(id == R.id.reportButton){
+            if(email.endsWith("@std.yildiz.edu.tr")){
+                Intent intent = new Intent(MainPageActivity.this, ReportActivity.class);
+                intent.putExtra("isFromCourse",false);
+                startActivity(intent);
+            }else{
+                Intent intent = new Intent(MainPageActivity.this, ShowReportsActivity.class);
+                startActivity(intent);
+            }
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -158,7 +175,7 @@ public class MainPageActivity extends AppCompatActivity implements RecyclerViewA
                         }
                         //Toast.makeText(getApplicationContext(),filteredUsers.toString(),Toast.LENGTH_LONG).show();
                         ((ViewGroup) progressBar.getParent()).removeView(progressBar);
-                        recyclerViewAdapter.notifyDataSetChanged();
+                        userRecyclerViewAdapter.notifyDataSetChanged();
                     }
                 });
             }

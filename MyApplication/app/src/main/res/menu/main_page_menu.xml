@@ -3,6 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/reportButton"
+        android:title=""
+        app:showAsAction="always"
+        android:icon="@drawable/baseline_report_24"
+        />
+
+    <item
+        android:id="@+id/coursesButton"
+        android:title=""
+        app:showAsAction="always"
+        android:icon="@drawable/baseline_menu_book_24"
+        />
+
+    <item
         android:id="@+id/profileButton"
         android:title=""
         app:showAsAction="always"

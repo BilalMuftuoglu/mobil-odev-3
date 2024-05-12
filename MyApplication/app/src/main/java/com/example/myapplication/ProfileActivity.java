@@ -125,7 +125,6 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
 
-
         View rootLayout = findViewById(android.R.id.content);
         rootLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
