@@ -1,5 +1,7 @@
 package com.example.myapplication;
 
+import static android.app.ActionBar.DISPLAY_SHOW_CUSTOM;
+
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,6 +25,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -171,7 +174,7 @@ public class CourseDetailsActivity extends AppCompatActivity {
                             i++;
                         }
 
-                        if(!accountType.equals("instructor")){
+                        if(!accountType.equals("instructors")){
                             ((ViewGroup) saveButton.getParent()).removeView(saveButton);
                             ((ViewGroup) updateButton.getParent()).removeView(updateButton);
                             ((ViewGroup) deleteButton.getParent()).removeView(deleteButton);
@@ -363,6 +366,30 @@ public class CourseDetailsActivity extends AppCompatActivity {
                     doc.getReference().delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void unused) {
+                            db.collection("course-student").whereEqualTo("courseId",courseId).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                @Override
+                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                    for(DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()){
+                                        doc.getReference().delete();
+                                    }
+                                }
+                            });
+                            db.collection("posts").whereEqualTo("courseId",courseId).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                @Override
+                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                    for(DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()){
+                                        db.collection("posts").document(doc.getId()).collection("comments").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                            @Override
+                                            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                                for(DocumentSnapshot doc2: queryDocumentSnapshots.getDocuments()){
+                                                    doc2.getReference().delete();
+                                                }
+                                                doc.getReference().delete();
+                                            }
+                                        });
+                                    }
+                                }
+                            });
                             finish();
                         }
                     });

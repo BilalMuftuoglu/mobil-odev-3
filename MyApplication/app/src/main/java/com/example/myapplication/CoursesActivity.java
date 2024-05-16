@@ -88,9 +88,9 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
 
         email = mAuth.getCurrentUser().getEmail();
         if(email.endsWith("@yildiz.edu.tr")){
-            accountType = "instructor";
+            accountType = "instructors";
         }else{
-            accountType = "student";
+            accountType = "students";
         }
 
         termSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -192,7 +192,7 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
                     }
                 });
 
-                if(accountType.equals("student")){
+                if(accountType.equals("students")){
                     courseIds = new ArrayList<>();
 
                     db.collection("course-student").whereEqualTo("studentEmail",email).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
@@ -216,21 +216,27 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
                                     }
                                 }
                             }
-
                             courseRecyclerViewAdapter.notifyDataSetChanged();
-
                         }
                     });
 
                 }else{
                     for(DocumentSnapshot doc: documents) {
-                        Map<String, String> course = new HashMap<>();
-                        course.put("courseName",doc.getString("courseName"));
-                        course.put("courseId",doc.getString("courseId"));
-                        course.put("isCompleted",doc.get("isCompleted").toString());
-                        course.put("term",doc.getString("term"));
-                        courses.add(course);
-                        filteredCourses.add(course);
+
+                        int numberOfGroups = (int) (long) doc.get("numberOfGroups");
+
+                        for(int i=1;i<=numberOfGroups;i++){
+                            if(email.equals(doc.getString("Gr"+i))){
+                                Map<String, String> course = new HashMap<>();
+                                course.put("courseName",doc.getString("courseName"));
+                                course.put("courseId",doc.getString("courseId"));
+                                course.put("isCompleted",doc.get("isCompleted").toString());
+                                course.put("term",doc.getString("term"));
+                                courses.add(course);
+                                filteredCourses.add(course);
+                                break;
+                            }
+                        }
                     }
 
                     courseRecyclerViewAdapter.notifyDataSetChanged();
@@ -248,9 +254,9 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.courses_page_menu, menu);
 
-        if(!accountType.equals("instructor")){
+        if(!accountType.equals("instructors")){
             menu.removeItem(R.id.addCourseButton);
-        }else if(!accountType.equals("student")){
+        }else if(!accountType.equals("students")){
             menu.removeItem(R.id.reportButton);
         }
 
@@ -287,11 +293,15 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
 
     @Override
     public void onItemLongClick(View view, int position) {
-        if(accountType.equals("student")){
+        /*if(accountType.equals("students")){
             Intent intent = new Intent(CoursesActivity.this, ReportActivity.class);
             intent.putExtra("isFromCourse",true);
             intent.putExtra("courseId",courses.get(position).get("courseId"));
             startActivity(intent);
-        }
+        }*/
+        Intent intent = new Intent(CoursesActivity.this, ClassroomActivity.class);
+        intent.putExtra("accountType",accountType);
+        intent.putExtra("courseId",courses.get(position).get("courseId"));
+        startActivity(intent);
     }
 }
