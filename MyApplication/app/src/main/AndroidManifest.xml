@@ -22,9 +22,16 @@
         android:theme="@style/Base.Theme.MyApplication"
         tools:targetApi="31">
         <activity
+            android:name=".PollMainActivity"
+            android:exported="false"
+            android:theme="@style/MainPageTheme" />
+        <activity
             android:name=".ClassroomActivity"
             android:exported="false"
             android:theme="@style/MainPageTheme" />
+        <activity
+            android:name=".PollAddActivity"
+            android:exported="false" />
         <activity
             android:name=".ShowReportsActivity"
             android:exported="false" />

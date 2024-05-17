@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- activity_main.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="16dp">
+
+    <!-- Poll question input -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="110dp"
+        app:cardCornerRadius="20dp"
+        app:cardMaxElevation="12dp"
+        app:cardElevation="6dp"
+        >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+
+
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:text="Create Poll"
+            android:textSize="28dp"
+            android:textColor="#091D88"
+            android:textStyle="bold"
+
+
+            />
+
+        <EditText
+
+            android:id="@+id/editTextQuestion"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:textSize="18dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/my_polls_quest_text"
+            android:hint="Enter Poll Question"
+            android:paddingLeft="10dp"
+            android:textStyle="bold"/>
+
+        <!-- Option inputs -->
+        <EditText
+            android:id="@+id/editTextOption1"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/editTextQuestion"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/my_edit_text"
+            android:hint="Option 1"
+            android:paddingLeft="10dp"
+            android:tag="editTextOption1" />
+
+        <EditText
+            android:id="@+id/editTextOption2"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/editTextOption1"
+            android:background="@drawable/my_edit_text"
+            android:hint="Option 2"
+            android:paddingLeft="10dp"
+            android:tag="editTextOption2" />
+
+        <!-- Additional option inputs -->
+        <LinearLayout
+            android:id="@+id/layoutOptions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/editTextOption2"
+            android:orientation="vertical">
+            <!-- Dynamically add EditTexts for additional options -->
+        </LinearLayout>
+
+        <!-- Button to add more options -->
+        <LinearLayout
+            android:id="@+id/layoutButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layoutOptions"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <!-- Button to add poll -->
+            <Button
+                android:id="@+id/buttonAddPoll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Poll" />
+
+            <Button
+                android:id="@+id/buttonDeleteOption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete Option" />
+
+            <Button
+                android:id="@+id/buttonAddOption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Option" />
+
+        </LinearLayout>
+        </LinearLayout>
+
+
+    </androidx.cardview.widget.CardView>
+
+</RelativeLayout>
