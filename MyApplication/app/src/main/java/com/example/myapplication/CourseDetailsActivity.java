@@ -36,6 +36,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.AggregateSource;
@@ -47,6 +48,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -390,6 +392,24 @@ public class CourseDetailsActivity extends AppCompatActivity {
                                     }
                                 }
                             });
+                            db.collection("polls").whereEqualTo("courseId",courseId).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                @Override
+                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                    for(DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()){
+                                        db.collection("polls").document(doc.getId()).collection("votes").get().addOnSuccessListener(queryDocumentSnapshotsInner -> {
+                                            List<Task<Void>> tasks = new ArrayList<>();
+                                            for (DocumentSnapshot doc2: queryDocumentSnapshotsInner.getDocuments()){
+                                                tasks.add(doc2.getReference().delete());
+                                            }
+                                            Tasks.whenAll(tasks).addOnSuccessListener(aVoid -> {
+                                                db.collection("polls").document(doc.getId()).delete().addOnSuccessListener(aVoid1 -> {
+                                                });
+                                            });
+                                        });
+                                    }
+                                }
+                            });
+
                             finish();
                         }
                     });

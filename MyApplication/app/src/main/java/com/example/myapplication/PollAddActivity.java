@@ -6,9 +6,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
@@ -22,7 +25,7 @@ public class PollAddActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private FirebaseUser user;
-    private String courseID, UserID;
+    private String courseID, UserID, accountType;
     private EditText editTextQuestion, editTextOption1, editTextOption2;
     private LinearLayout layoutOptions;
     private Button buttonAddOption, buttonAddPoll, deleteButton;
@@ -42,7 +45,7 @@ public class PollAddActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         courseID = extras.getString("courseId");
-
+        accountType = extras.getString("accountType");
         // Initialize views
         editTextQuestion = findViewById(R.id.editTextQuestion);
         editTextOption1 = findViewById(R.id.editTextOption1);
@@ -134,17 +137,23 @@ public class PollAddActivity extends AppCompatActivity {
         }
         poll.put("optionCount", optionCount);
         poll.put("totalVotes", 0);
-        poll.put("instructorEmail", user.getEmail());
-        poll.put("status", "active");
-        poll.put("courseID", courseID);
+        poll.put("email", user.getEmail());
+        poll.put("status", true);
+        poll.put("courseId", courseID);
         poll.put("date", FieldValue.serverTimestamp());
 
-        FirebaseFirestore.getInstance().collection("polls").add(poll).addOnSuccessListener(documentReference -> {
-            //poll added successfully
-            startActivity(new Intent(PollAddActivity.this, PollMainActivity.class));
+        db.collection("polls").add(poll).addOnSuccessListener(aVoid -> {
+            Intent intent = new Intent(PollAddActivity.this, PollListActivity.class);
+            intent.putExtra("courseId", courseID);
+            intent.putExtra("accountType",accountType);
+            startActivity(intent);
+            finish();
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(PollAddActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
-
-
     }
 
 

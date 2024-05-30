@@ -86,28 +86,6 @@ public class ClassroomActivity extends AppCompatActivity {
 
     public void fetchPosts(){
         postList.clear();
-        /*db.collection("posts").whereEqualTo("courseId",courseId).orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
-
-            for (DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()) {
-                Map<String, Object> post = doc.getData();
-                Date date = doc.getTimestamp("date").toDate();
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy   HH:mm", Locale.getDefault());
-                String formattedDate = sdf.format(date);
-                post.put("date",formattedDate);
-
-                db.collection("instructors").whereEqualTo("email",post.get("email").toString()).get().addOnSuccessListener(query2DocumentSnapshots -> {
-                    for (DocumentSnapshot doc2: query2DocumentSnapshots.getDocuments()) {
-                        String username = doc2.getString("nameSurname");
-                        post.put("username",username);
-                        String profileImageUrl = doc2.getString("profileImageUrl");
-                        post.put("profileImageUrl",profileImageUrl);
-
-                        postList.add(post);
-                        postRecyclerViewAdapter.notifyDataSetChanged();
-                    }
-                });
-            }
-        });*/
         db.collection("posts").whereEqualTo("courseId", courseId).orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<Map<String, Object>> tempPostList = new ArrayList<>();
 
@@ -172,7 +150,7 @@ public class ClassroomActivity extends AppCompatActivity {
             popUpEditText();
         }
         if(id == R.id.pollsPageButton){
-            Intent intent = new Intent(ClassroomActivity.this, PollMainActivity.class);
+            Intent intent = new Intent(ClassroomActivity.this, PollListActivity.class);
             intent.putExtra("courseId",courseId);
             intent.putExtra("accountType",accountType);
             startActivity(intent);
