@@ -17,6 +17,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,6 +33,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.squareup.picasso.Picasso;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,12 +54,15 @@ public class PostRecyclerViewAdapter extends RecyclerView.Adapter<PostRecyclerVi
     FirebaseAuth mAuth;
     String accountType;
     String email;
+    private RequestQueue requestQueue;
 
     public PostRecyclerViewAdapter(Context context, ArrayList<Map<String,Object>> postList, String commentProfileImageUrl, String myUsername) {
         this.postList = postList;
         this.context = context;
         this.commentProfileImageUrl = commentProfileImageUrl;
         this.myUsername = myUsername;
+
+        requestQueue = Volley.newRequestQueue(context);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -241,8 +254,52 @@ public class PostRecyclerViewAdapter extends RecyclerView.Adapter<PostRecyclerVi
                 comment.put("postId", post.get("postId"));
                 commentList.add(comment);
                 commentRecyclerViewAdapter.notifyDataSetChanged();
+
+                if (post.get("alert").toString().equals("true")){
+                    sendNotification(commentText,post.get("courseId").toString());
+                }
             });
         });
+    }
+
+    private void sendNotification(String commentText, String courseId){
+        JSONObject object = new JSONObject();
+        try {
+            object.put("to","/topics/"+courseId);
+            JSONObject notification = new JSONObject();
+            notification.put("title",courseId + " sınıfında yeni duyuru!");
+            notification.put("body",commentText);
+
+            JSONObject data = new JSONObject();
+            data.put("courseId",courseId);
+
+            object.put("data",data);
+            object.put("notification",notification);
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, "https://fcm.googleapis.com/fcm/send", object, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject jsonObject) {
+                    Toast.makeText(context,"Bildirim başarıyla gönderildi!",Toast.LENGTH_LONG).show();
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    Toast.makeText(context,volleyError.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String,String> headers = new HashMap<>();
+                    headers.put("Content-Type","application/json");
+                    headers.put("Authorization","key=AAAAIIZbZG4:APA91bFo6e_rJOaLmJad1BGcNU49V_8WqqVcPR9uf2G0YXcY4sFMjxFMKG-Q4Ijyx4nrfVDNscLiKBYB1vMUaqaCBsXUmONKrZvURgp8g49Bs0ZNSRYSBB5qkuiq87lPE4fVMtVAD73q");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(request);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

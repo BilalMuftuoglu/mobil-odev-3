@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -192,12 +194,23 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
                     }
                 });
 
+                //remove all subscriptions
+                SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                int size = sharedPreferences.getInt("courseIdsSize",0);
+                for(int i=0;i<size;i++){
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic(sharedPreferences.getString("courseId"+i,""));
+                    editor.remove("courseId"+i);
+                }
+                editor.apply();
+
                 if(accountType.equals("students")){
                     courseIds = new ArrayList<>();
 
                     db.collection("course-student").whereEqualTo("studentEmail",email).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                         @Override
                         public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+
                             for(DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()){
                                 courseIds.add(doc.getString("courseId"));
                             }
@@ -211,15 +224,22 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
 
                                 for(String id: courseIds){
                                     if(id.equals(doc.getString("courseId"))){
+                                        FirebaseMessaging.getInstance().subscribeToTopic(id);
                                         courses.add(course);
                                         filteredCourses.add(course);
                                     }
                                 }
                             }
                             courseRecyclerViewAdapter.notifyDataSetChanged();
+
+                            //save all course ids to shared preferences
+                            editor.putInt("courseIdsSize", courses.size());
+                            for (int i = 0; i < courses.size(); i++) {
+                                editor.putString("courseId" + i, courses.get(i).get("courseId"));
+                            }
+                            editor.apply();
                         }
                     });
-
                 }else{
                     for(DocumentSnapshot doc: documents) {
 
@@ -232,12 +252,19 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
                                 course.put("courseId",doc.getString("courseId"));
                                 course.put("isCompleted",doc.get("isCompleted").toString());
                                 course.put("term",doc.getString("term"));
+                                FirebaseMessaging.getInstance().subscribeToTopic(doc.getString("courseId"));
                                 courses.add(course);
                                 filteredCourses.add(course);
                                 break;
                             }
                         }
                     }
+
+                    editor.putInt("courseIdsSize", courses.size());
+                    for (int i = 0; i < courses.size(); i++) {
+                        editor.putString("courseId" + i, courses.get(i).get("courseId"));
+                    }
+                    editor.apply();
 
                     courseRecyclerViewAdapter.notifyDataSetChanged();
                 }

@@ -1,7 +1,12 @@
 package com.example.myapplication;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,7 +16,12 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -19,6 +29,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,19 +46,33 @@ public class MainPageActivity extends AppCompatActivity implements UserRecyclerV
     ArrayList<Map<String,String>> filteredUsers;
     ProgressBar progressBar;
     String email;
+    String accountType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
 
-        progressBar = findViewById(R.id.progressBar);
-        searchView = findViewById(R.id.searchView);
-
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         email = mAuth.getCurrentUser().getEmail();
+
+        if (getIntent().hasExtra("courseId")) {
+            Intent intent = new Intent(MainPageActivity.this, ClassroomActivity.class);
+            intent.putExtra("courseId", getIntent().getStringExtra("courseId"));
+            if(email.endsWith("@std.yildiz.edu.tr")){
+                accountType = "students";
+            }else if (email.endsWith("@yildiz.edu.tr")){
+                accountType = "instructors";
+            }
+            getIntent().removeExtra("courseId");
+            intent.putExtra("accountType", accountType);
+            startActivity(intent);
+        }
+
+        progressBar = findViewById(R.id.progressBar);
+        searchView = findViewById(R.id.searchView);
 
         users = new ArrayList<>();
         filteredUsers = new ArrayList<>();
@@ -84,6 +110,28 @@ public class MainPageActivity extends AppCompatActivity implements UserRecyclerV
             }
         });
 
+        checkNotificationPermission(this);
+
+    }
+
+    private void checkNotificationPermission(Activity context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1111);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1111) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            } else {
+
+            }
+        }
     }
 
     @Override
@@ -112,6 +160,17 @@ public class MainPageActivity extends AppCompatActivity implements UserRecyclerV
 
         if(id == R.id.logOutButton) {
             mAuth.signOut();
+
+            //remove all subscriptions
+            SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            int size = sharedPreferences.getInt("courseIdsSize",0);
+            for(int i=0;i<size;i++){
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(sharedPreferences.getString("courseId"+i,""));
+                editor.remove("courseId"+i);
+            }
+            editor.apply();
+
             Intent intent = new Intent(MainPageActivity.this, SignInActivity.class);
             startActivity(intent);
             finish();

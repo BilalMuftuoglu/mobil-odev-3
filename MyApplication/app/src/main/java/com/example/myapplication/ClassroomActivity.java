@@ -22,6 +22,13 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -32,8 +39,12 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -58,10 +69,14 @@ public class ClassroomActivity extends AppCompatActivity {
     String myProfileImageUrl;
     String myUsername;
 
+    private RequestQueue requestQueue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_classroom);
+
+        requestQueue = Volley.newRequestQueue(this);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -248,9 +263,54 @@ public class ClassroomActivity extends AppCompatActivity {
         post.put("date", FieldValue.serverTimestamp());
         post.put("courseId",courseId);
         post.put("post",postText);
+        post.put("alert",alert);
 
         db.collection("posts").add(post).addOnSuccessListener(documentReference -> {
             fetchPosts();
+
+            if(alert){
+                sendNotification(postText);
+            }
         });
+    }
+
+    private void sendNotification(String postText){
+        JSONObject object = new JSONObject();
+        try {
+            object.put("to","/topics/"+courseId);
+            JSONObject notification = new JSONObject();
+            notification.put("title",courseId + " sınıfında yeni duyuru!");
+            notification.put("body",postText);
+
+            JSONObject data = new JSONObject();
+            data.put("courseId",courseId);
+
+            object.put("data",data);
+            object.put("notification",notification);
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, "https://fcm.googleapis.com/fcm/send", object, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject jsonObject) {
+                    Toast.makeText(getApplicationContext(),"Bildirim başarıyla gönderildi!",Toast.LENGTH_LONG).show();
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    Toast.makeText(getApplicationContext(),volleyError.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String,String> headers = new HashMap<>();
+                    headers.put("Content-Type","application/json");
+                    headers.put("Authorization","key=AAAAIIZbZG4:APA91bFo6e_rJOaLmJad1BGcNU49V_8WqqVcPR9uf2G0YXcY4sFMjxFMKG-Q4Ijyx4nrfVDNscLiKBYB1vMUaqaCBsXUmONKrZvURgp8g49Bs0ZNSRYSBB5qkuiq87lPE4fVMtVAD73q");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(request);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
