@@ -1,11 +1,17 @@
 package com.example.myapplication;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +26,17 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
-
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -40,15 +52,42 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 public class CourseDetailsActivity extends AppCompatActivity {
-
+    public static final int PERM_CODE = 101;
+    private static final double EARTH_RADIUS = 6371000;
+    FusedLocationProviderClient mFusedLocationClient;
+    public static boolean checkAndRequestPermissions(final Activity context) {
+        int coarselocation = ContextCompat.checkSelfPermission(context,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        int finelocation = ContextCompat.checkSelfPermission(context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        if (coarselocation != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if (finelocation != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded
+                    .add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(context, listPermissionsNeeded
+                            .toArray(new String[listPermissionsNeeded.size()]),
+                    PERM_CODE);
+            return false;
+        }
+        return true;
+    }
     EditText courseIdText;
     EditText courseNameText;
     Spinner daySpinner;
@@ -60,11 +99,15 @@ public class CourseDetailsActivity extends AppCompatActivity {
     ListView listView;
     CheckBox isCompletedBox;
 
+    Button joinAttendanceButton;
+
     Button addInstructorGroupButton;
     Button saveButton;
     Button updateButton;
 
     Button deleteButton;
+
+    Button attendanceButton;
 
     ArrayList<String> emails;
     ArrayList<String> listStrings;
@@ -81,8 +124,24 @@ public class CourseDetailsActivity extends AppCompatActivity {
     int numberOfGroups;
     String docId;
 
+    String instructor_lat;
+    String instructor_lon;
+
+    String  student_lat;
+    String  student_lon;
+
 
     int hour,minute;
+
+    public static double haversine(double lat1, double lon1, double lat2, double lon2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS * c;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +169,42 @@ public class CourseDetailsActivity extends AppCompatActivity {
         updateButton = findViewById(R.id.updateButton);
         deleteButton = findViewById(R.id.deleteButton);
         isCompletedBox = findViewById(R.id.isCompletedBox);
+        attendanceButton=findViewById(R.id.attendanceButton);
+        joinAttendanceButton=findViewById(R.id.joinAttendanceButton);
+        joinAttendanceButton.setVisibility(View.INVISIBLE);
+        joinAttendanceButton.setFocusable(false);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        checkAndRequestPermissions(CourseDetailsActivity.this);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+            Log.d("HATAAAAA", "izin yokmus ");
+            return;
+        }
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                student_lat= String.valueOf(location.getLatitude());
+                student_lon=String.valueOf(location.getLongitude());
+
+                Log.d(" ogrenci KOnum ",student_lat+" "+student_lon);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("HATAAAAA", e.toString());
+
+            }
+        });
+
+        //((ViewGroup) joinAttendanceButton.getParent()).removeView(joinAttendanceButton);
 
         String[] days = new String[]{"Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"};
         String[] terms = new String[]{"2023-2024 Güz","2023-2024 Bahar","2023-2024 Yaz","2024-2025 Güz","2024-2025 Bahar","2024-2025 Yaz"};
@@ -131,6 +226,115 @@ public class CourseDetailsActivity extends AppCompatActivity {
         emailAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1,listStrings);
         listView.setAdapter(emailAdapter);
 
+        db.collection("attendance-student")
+                .whereEqualTo("courseId", courseId)
+                .whereEqualTo("student",email)
+                .orderBy("date", Query.Direction.DESCENDING)
+                .limit(1)
+                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        Toast.makeText(getApplicationContext(), email+courseId+"durummm"+queryDocumentSnapshots.getDocuments().size(), Toast.LENGTH_LONG).show();
+
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            // En yakın tarihli belgeyi al
+                            Toast.makeText(getApplicationContext(), "durummm2", Toast.LENGTH_LONG).show();
+
+                            DocumentSnapshot document = queryDocumentSnapshots.getDocuments().get(0);
+                            Date date = document.getDate("date");
+
+                            // Şu anki tarih
+                            Date currentDate = new Date();
+                            // 3 gün öncesi
+                            Calendar calendar = Calendar.getInstance();
+                            calendar.setTime(currentDate);
+                            calendar.add(Calendar.DAY_OF_YEAR, -3);
+                            Date threeDaysAgo = calendar.getTime();
+
+                            // Son 3 gün içinde olup olmadığını kontrol et
+                            boolean isOlderThanThreeDays = date.before(threeDaysAgo);
+
+                            // Sonuçlara göre işlemler
+                            if (!isOlderThanThreeDays) {
+                                // 3 günden eski değil
+                                joinAttendanceButton.setClickable(false);
+                                joinAttendanceButton.setBackgroundColor(Color.YELLOW);
+                                joinAttendanceButton.setText("Katılındı");
+
+                            }
+
+                    }}
+                });
+
+
+
+        joinAttendanceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                db.collection("attendance").whereEqualTo("courseId",courseId)
+
+                        .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                            @Override
+                            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                if (!queryDocumentSnapshots.isEmpty()) {
+                                    // En yakın tarihli kaydı al
+                                    DocumentSnapshot document = queryDocumentSnapshots.getDocuments().get(0);
+                                    docId=document.getId();
+                                    double lat = Double.valueOf(document.get("lat").toString());
+                                    double lon = Double.valueOf(document.get("lon").toString());
+
+                                    // Öğrencinin konumu ile kayıttaki konumu karşılaştır
+                                    float[] results = new float[1];
+                                    Location.distanceBetween(Double.valueOf(student_lat), Double.valueOf(student_lon), lat, lon, results);
+                                    float distanceInMeters = results[0];
+
+                                    Toast.makeText(getApplicationContext(), "Konumunuz "+String.valueOf(distanceInMeters), Toast.LENGTH_LONG).show();
+
+
+                                    if (distanceInMeters <= 12) {
+                                        // İşlemleri gerçekleştirin
+                                        Map<String, Object> yeniVeri = new HashMap<>();
+                                        yeniVeri.put("courseId", courseId);
+                                        yeniVeri.put("date", new Date());
+                                        yeniVeri.put("student", email);
+                                        yeniVeri.put("lat", student_lat);
+                                        yeniVeri.put("lon", student_lon);
+                                        yeniVeri.put("attendanceId", docId);
+
+                                        db.collection("attendance-student").document().set(yeniVeri).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                Toast.makeText(getApplicationContext(), "Başarıyla derse katılındı", Toast.LENGTH_LONG).show();
+                                                joinAttendanceButton.setClickable(false);
+                                                joinAttendanceButton.setBackgroundColor(Color.YELLOW);
+                                                joinAttendanceButton.setText("Katılındı");
+                                            }
+                                        });
+                                    } else {
+                                        // Mesafe 12 metreden büyükse
+                                        Toast.makeText(getApplicationContext(), "Konumunuz 12 metreden uzakta", Toast.LENGTH_LONG).show();
+                                    }
+                                } else {
+                                    // Belirtilen courseId ile eşleşen döküman bulunamadı
+                                    Toast.makeText(getApplicationContext(), "Ders kaydı bulunamadı", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+            }
+        });
+
+
+
+
+
+
+
+
+
+
+
+
+
         if(isFromRecycler){
             courseId = extras.getString("courseId");
             accountType = extras.getString("accountType");
@@ -148,7 +352,6 @@ public class CourseDetailsActivity extends AppCompatActivity {
                         daySpinner.setSelection(getIndex(daySpinner, doc.get("courseDay").toString()));
                         termSpinner.setSelection(getIndex(termSpinner,doc.get("term").toString()));
                         numberOfGroups = (int) (long) doc.get("numberOfGroups");
-                        docId = doc.getId();
 
                         int i;
                         for(i=1;i<=numberOfGroups;i++){
@@ -178,12 +381,47 @@ public class CourseDetailsActivity extends AppCompatActivity {
                             ((ViewGroup) addInstructorGroupButton.getParent()).removeView(addInstructorGroupButton);
                             ((ViewGroup) startHourButton.getParent()).removeView(startHourButton);
                             ((ViewGroup) endHourButton.getParent()).removeView(endHourButton);
+                            ((ViewGroup) attendanceButton.getParent()).removeView(attendanceButton);
                             courseNameText.setEnabled(false);
                             courseIdText.setEnabled(false);
                             daySpinner.setEnabled(false);
                             termSpinner.setEnabled(false);
                             isCompletedBox.setEnabled(false);
+
+                            db.collection("course-student").whereEqualTo("courseId",courseId).whereEqualTo("studentEmail",email).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                @Override
+                                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                    List<DocumentSnapshot> documents = queryDocumentSnapshots.getDocuments();
+                                    for (DocumentSnapshot document : documents){
+
+                                        db.collection("attendance").whereEqualTo("status","active").whereEqualTo("instructorMail",document.getString("instructorEmail"))
+                                                .whereEqualTo("courseId",courseId).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                            @Override
+                                            public void onSuccess(QuerySnapshot queryDocumentSnapshots2) {
+                                                List<DocumentSnapshot> documents2 = queryDocumentSnapshots2.getDocuments();
+
+                                                for (DocumentSnapshot document2 : documents2){
+                                                        //((ViewGroup) joinAttendanceButton.getParent()).addView(joinAttendanceButton);
+                                                    joinAttendanceButton.setVisibility(View.VISIBLE);
+                                                    joinAttendanceButton.setFocusable(true);
+
+                                                }
+                                            }
+                                        });
+
+                                    }
+                                }
+                            });
+
+
+
+
+
+
+
                         }else{
+                            ((ViewGroup) joinAttendanceButton.getParent()).removeView(joinAttendanceButton);
+
                             //dersin yürütücüsü değilse viewları gizle
                             System.out.println(emails);
                             for (String e: emails) {
@@ -202,6 +440,7 @@ public class CourseDetailsActivity extends AppCompatActivity {
                                 ((ViewGroup) addInstructorGroupButton.getParent()).removeView(addInstructorGroupButton);
                                 ((ViewGroup) startHourButton.getParent()).removeView(startHourButton);
                                 ((ViewGroup) endHourButton.getParent()).removeView(endHourButton);
+                                ((ViewGroup) attendanceButton.getParent()).removeView(attendanceButton);
                                 courseNameText.setEnabled(false);
                                 courseIdText.setEnabled(false);
                                 daySpinner.setEnabled(false);
@@ -265,6 +504,25 @@ public class CourseDetailsActivity extends AppCompatActivity {
                 }
             });
         }
+
+
+        attendanceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CourseDetailsActivity.this, AttendanceActivity.class);
+                intent.putExtra("isAutherized",isAutherized);
+                intent.putExtra("courseId",courseId);
+                intent.putExtra("attendanceId",docId);
+
+                startActivity(intent);
+            }
+        });
+
+
+
+
+
+
 
         startHourButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -341,6 +599,7 @@ public class CourseDetailsActivity extends AppCompatActivity {
                             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                                 for(DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()){
                                     doc.getReference().delete();
+
                                 }
                                 emails.remove(index);
                                 emailAdapter.notifyDataSetChanged();
