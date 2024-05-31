@@ -40,9 +40,19 @@
             android:resource="@color/myDarkBlue" />
 
         <activity
+            android:name=".PollDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PollListActivity"
+            android:exported="false"
+            android:theme="@style/MainPageTheme" />
+        <activity
             android:name=".ClassroomActivity"
             android:exported="false"
             android:theme="@style/MainPageTheme" />
+        <activity
+            android:name=".PollAddActivity"
+            android:exported="false" />
         <activity
             android:name=".ShowReportsActivity"
             android:exported="false" />
