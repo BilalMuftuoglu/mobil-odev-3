@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import static android.app.ActionBar.DISPLAY_SHOW_CUSTOM;
 
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -53,7 +54,34 @@ import java.util.Locale;
 import java.util.Map;
 
 public class CourseDetailsActivity extends AppCompatActivity {
+<<<<<<< Updated upstream
 
+=======
+    public static final int PERM_CODE = 101;
+    private static final double EARTH_RADIUS = 6371000;
+    FusedLocationProviderClient mFusedLocationClient;
+    public static boolean checkAndRequestPermissions(final Activity context) {
+        int coarselocation = ContextCompat.checkSelfPermission(context,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        int finelocation = ContextCompat.checkSelfPermission(context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        if (coarselocation != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if (finelocation != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded
+                    .add(android.Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(context, listPermissionsNeeded
+                            .toArray(new String[listPermissionsNeeded.size()]),
+                    PERM_CODE);
+            return false;
+        }
+        return true;
+    }
+>>>>>>> Stashed changes
     EditText courseIdText;
     EditText courseNameText;
     Spinner daySpinner;
@@ -115,6 +143,45 @@ public class CourseDetailsActivity extends AppCompatActivity {
         updateButton = findViewById(R.id.updateButton);
         deleteButton = findViewById(R.id.deleteButton);
         isCompletedBox = findViewById(R.id.isCompletedBox);
+<<<<<<< Updated upstream
+=======
+        attendanceButton=findViewById(R.id.attendanceButton);
+        joinAttendanceButton=findViewById(R.id.joinAttendanceButton);
+        joinAttendanceButton.setVisibility(View.INVISIBLE);
+        joinAttendanceButton.setFocusable(false);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        checkAndRequestPermissions(CourseDetailsActivity.this);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+            Log.d("HATAAAAA", "izin yokmus ");
+            return;
+        }
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                student_lat= String.valueOf(location.getLatitude());
+                student_lon=String.valueOf(location.getLongitude());
+
+                Log.d(" ogrenci KOnum ",student_lat+" "+student_lon);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("HATAAAAA", e.toString());
+
+            }
+        });
+
+        //((ViewGroup) joinAttendanceButton.getParent()).removeView(joinAttendanceButton);
+>>>>>>> Stashed changes
 
         String[] days = new String[]{"Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"};
         String[] terms = new String[]{"2023-2024 Güz","2023-2024 Bahar","2023-2024 Yaz","2024-2025 Güz","2024-2025 Bahar","2024-2025 Yaz"};
