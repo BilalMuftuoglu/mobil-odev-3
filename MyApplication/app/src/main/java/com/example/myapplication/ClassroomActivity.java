@@ -207,33 +207,6 @@ public class ClassroomActivity extends AppCompatActivity {
     }
 
     private void popUpEditText() {
-        /*AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-        alert.setTitle("Duyuru Ekle");
-        alert.setMessage("Duyurunuzu buraya yazınız");
-        alert.setCancelable(false);
-
-        final EditText input = new EditText(this);
-        input.setSingleLine(false);
-        input.setGravity(Gravity.LEFT|Gravity.TOP);
-        input.setBackground(getResources().getDrawable(R.drawable.my_edit_text));
-        input.setMinLines(5);
-        input.setPadding(30,0,30,0);
-        alert.setView(input,50,0,50,0);
-
-        alert.setPositiveButton("Gönder", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                if(input.getText().toString().trim().isEmpty()){
-                    Toast.makeText(getApplicationContext(),"Lütfen bir duyuru giriniz!",Toast.LENGTH_LONG).show();
-                }else{
-                    String postText = input.getText().toString().trim();
-                    addPost(postText,false);
-                }
-            }
-        });
-
-        alert.setNegativeButton("İptal",null);
-        alert.show();*/
 
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
