@@ -39,9 +39,16 @@ public class SignInActivity extends AppCompatActivity {
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser != null){
-            Intent intent = new Intent(SignInActivity.this, MainPageActivity.class);
-            startActivity(intent);
-            finish();
+            if (getIntent().hasExtra("courseId")) {
+                Intent intent = new Intent(SignInActivity.this, MainPageActivity.class);
+                intent.putExtra("courseId", getIntent().getStringExtra("courseId"));
+                startActivity(intent);
+                finish();
+            }else{
+                Intent intent = new Intent(SignInActivity.this, MainPageActivity.class);
+                startActivity(intent);
+                finish();
+            }
         }
 
         emailText = findViewById(R.id.nameText);

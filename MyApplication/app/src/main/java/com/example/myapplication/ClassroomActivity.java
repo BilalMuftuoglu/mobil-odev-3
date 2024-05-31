@@ -3,6 +3,8 @@ package com.example.myapplication;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,12 +12,25 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,7 +39,12 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,10 +69,14 @@ public class ClassroomActivity extends AppCompatActivity {
     String myProfileImageUrl;
     String myUsername;
 
+    private RequestQueue requestQueue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_classroom);
+
+        requestQueue = Volley.newRequestQueue(this);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -86,6 +110,28 @@ public class ClassroomActivity extends AppCompatActivity {
 
     public void fetchPosts(){
         postList.clear();
+        /*db.collection("posts").whereEqualTo("courseId",courseId).orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
+
+            for (DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()) {
+                Map<String, Object> post = doc.getData();
+                Date date = doc.getTimestamp("date").toDate();
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy   HH:mm", Locale.getDefault());
+                String formattedDate = sdf.format(date);
+                post.put("date",formattedDate);
+
+                db.collection("instructors").whereEqualTo("email",post.get("email").toString()).get().addOnSuccessListener(query2DocumentSnapshots -> {
+                    for (DocumentSnapshot doc2: query2DocumentSnapshots.getDocuments()) {
+                        String username = doc2.getString("nameSurname");
+                        post.put("username",username);
+                        String profileImageUrl = doc2.getString("profileImageUrl");
+                        post.put("profileImageUrl",profileImageUrl);
+
+                        postList.add(post);
+                        postRecyclerViewAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        });*/
         db.collection("posts").whereEqualTo("courseId", courseId).orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<Map<String, Object>> tempPostList = new ArrayList<>();
 
@@ -224,9 +270,54 @@ public class ClassroomActivity extends AppCompatActivity {
         post.put("date", FieldValue.serverTimestamp());
         post.put("courseId",courseId);
         post.put("post",postText);
+        post.put("alert",alert);
 
         db.collection("posts").add(post).addOnSuccessListener(documentReference -> {
             fetchPosts();
+
+            if(alert){
+                sendNotification(postText);
+            }
         });
+    }
+
+    private void sendNotification(String postText){
+        JSONObject object = new JSONObject();
+        try {
+            object.put("to","/topics/"+courseId);
+            JSONObject notification = new JSONObject();
+            notification.put("title",courseId + " sınıfında yeni duyuru!");
+            notification.put("body",postText);
+
+            JSONObject data = new JSONObject();
+            data.put("courseId",courseId);
+
+            object.put("data",data);
+            object.put("notification",notification);
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, "https://fcm.googleapis.com/fcm/send", object, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject jsonObject) {
+                    Toast.makeText(getApplicationContext(),"Bildirim başarıyla gönderildi!",Toast.LENGTH_LONG).show();
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    Toast.makeText(getApplicationContext(),volleyError.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String,String> headers = new HashMap<>();
+                    headers.put("Content-Type","application/json");
+                    headers.put("Authorization","key=AAAAIIZbZG4:APA91bFo6e_rJOaLmJad1BGcNU49V_8WqqVcPR9uf2G0YXcY4sFMjxFMKG-Q4Ijyx4nrfVDNscLiKBYB1vMUaqaCBsXUmONKrZvURgp8g49Bs0ZNSRYSBB5qkuiq87lPE4fVMtVAD73q");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(request);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
