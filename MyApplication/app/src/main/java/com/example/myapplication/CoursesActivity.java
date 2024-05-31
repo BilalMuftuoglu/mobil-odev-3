@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,9 +90,9 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
 
         email = mAuth.getCurrentUser().getEmail();
         if(email.endsWith("@yildiz.edu.tr")){
-            accountType = "instructor";
+            accountType = "instructors";
         }else{
-            accountType = "student";
+            accountType = "students";
         }
 
         termSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -192,12 +194,23 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
                     }
                 });
 
-                if(accountType.equals("student")){
+                //remove all subscriptions
+                SharedPreferences sharedPreferences = getSharedPreferences("sharedPrefs", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                int size = sharedPreferences.getInt("courseIdsSize",0);
+                for(int i=0;i<size;i++){
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic(sharedPreferences.getString("courseId"+i,""));
+                    editor.remove("courseId"+i);
+                }
+                editor.apply();
+
+                if(accountType.equals("students")){
                     courseIds = new ArrayList<>();
 
                     db.collection("course-student").whereEqualTo("studentEmail",email).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                         @Override
                         public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+
                             for(DocumentSnapshot doc: queryDocumentSnapshots.getDocuments()){
                                 courseIds.add(doc.getString("courseId"));
                             }
@@ -211,27 +224,47 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
 
                                 for(String id: courseIds){
                                     if(id.equals(doc.getString("courseId"))){
+                                        FirebaseMessaging.getInstance().subscribeToTopic(id);
                                         courses.add(course);
                                         filteredCourses.add(course);
                                     }
                                 }
                             }
-
                             courseRecyclerViewAdapter.notifyDataSetChanged();
 
+                            //save all course ids to shared preferences
+                            editor.putInt("courseIdsSize", courses.size());
+                            for (int i = 0; i < courses.size(); i++) {
+                                editor.putString("courseId" + i, courses.get(i).get("courseId"));
+                            }
+                            editor.apply();
                         }
                     });
-
                 }else{
                     for(DocumentSnapshot doc: documents) {
-                        Map<String, String> course = new HashMap<>();
-                        course.put("courseName",doc.getString("courseName"));
-                        course.put("courseId",doc.getString("courseId"));
-                        course.put("isCompleted",doc.get("isCompleted").toString());
-                        course.put("term",doc.getString("term"));
-                        courses.add(course);
-                        filteredCourses.add(course);
+
+                        int numberOfGroups = (int) (long) doc.get("numberOfGroups");
+
+                        for(int i=1;i<=numberOfGroups;i++){
+                            if(email.equals(doc.getString("Gr"+i))){
+                                Map<String, String> course = new HashMap<>();
+                                course.put("courseName",doc.getString("courseName"));
+                                course.put("courseId",doc.getString("courseId"));
+                                course.put("isCompleted",doc.get("isCompleted").toString());
+                                course.put("term",doc.getString("term"));
+                                FirebaseMessaging.getInstance().subscribeToTopic(doc.getString("courseId"));
+                                courses.add(course);
+                                filteredCourses.add(course);
+                                break;
+                            }
+                        }
                     }
+
+                    editor.putInt("courseIdsSize", courses.size());
+                    for (int i = 0; i < courses.size(); i++) {
+                        editor.putString("courseId" + i, courses.get(i).get("courseId"));
+                    }
+                    editor.apply();
 
                     courseRecyclerViewAdapter.notifyDataSetChanged();
                 }
@@ -248,9 +281,9 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.courses_page_menu, menu);
 
-        if(!accountType.equals("instructor")){
+        if(!accountType.equals("instructors")){
             menu.removeItem(R.id.addCourseButton);
-        }else if(!accountType.equals("student")){
+        }else if(!accountType.equals("students")){
             menu.removeItem(R.id.reportButton);
         }
 
@@ -287,11 +320,15 @@ public class CoursesActivity extends AppCompatActivity implements CourseRecycler
 
     @Override
     public void onItemLongClick(View view, int position) {
-        if(accountType.equals("student")){
+        /*if(accountType.equals("students")){
             Intent intent = new Intent(CoursesActivity.this, ReportActivity.class);
             intent.putExtra("isFromCourse",true);
             intent.putExtra("courseId",courses.get(position).get("courseId"));
             startActivity(intent);
-        }
+        }*/
+        Intent intent = new Intent(CoursesActivity.this, ClassroomActivity.class);
+        intent.putExtra("accountType",accountType);
+        intent.putExtra("courseId",courses.get(position).get("courseId"));
+        startActivity(intent);
     }
 }
