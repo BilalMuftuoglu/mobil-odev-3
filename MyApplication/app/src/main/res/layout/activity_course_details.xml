@@ -300,6 +300,22 @@
                 android:layout_margin="2dp"
                 android:layout_gravity="center"/>
 
+            <Button
+                android:id="@+id/attendanceButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Yoklamalar"
+                android:layout_margin="2dp"
+                android:layout_gravity="center"/>
+
+            <Button
+                android:id="@+id/joinAttendanceButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Yoklamaya Katıl"
+                android:layout_margin="2dp"
+                android:layout_gravity="center"/>
+
 
         </LinearLayout>
 
